@@ -1,0 +1,293 @@
+/* HermezOS Custom Styles - Elite Modern Design */
+
+:root {
+  /* Brand Colors */
+  --hermez-primary: #6366f1;
+  --hermez-primary-dark: #4f46e5;
+  --hermez-accent: #f59e0b;
+  --hermez-accent-dark: #d97706;
+
+  /* Gradients */
+  --hermez-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  --hermez-gradient-subtle: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%);
+
+  /* Shadows */
+  --hermez-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --hermez-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --hermez-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --hermez-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Typography */
+  --hermez-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Hero Section Styling */
+.md-typeset h1:first-child {
+  font-size: 4rem;
+  font-weight: 800;
+  background: var(--hermez-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin: 2rem 0 1rem 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h1:first-child + p {
+  font-size: 1.5rem;
+  font-weight: 300;
+  text-align: center;
+  color: var(--md-default-fg-color--light);
+  margin-bottom: 3rem;
+  font-style: italic;
+}
+
+/* Section Headers */
+.md-typeset h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 3rem 0 1.5rem 0;
+  position: relative;
+  color: var(--md-primary-fg-color);
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h2::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 4rem;
+  height: 0.25rem;
+  background: var(--hermez-gradient);
+  border-radius: 0.125rem;
+}
+
+.md-typeset h3 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem 0;
+  color: var(--md-primary-fg-color);
+}
+
+/* Enhanced Code Blocks */
+.md-typeset .highlight {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: var(--hermez-shadow-lg);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  margin: 2rem 0;
+  position: relative;
+}
+
+.md-typeset .highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  background: var(--hermez-gradient);
+}
+
+.md-typeset .highlight pre {
+  margin: 0;
+  padding: 1.5rem;
+  background: var(--md-code-bg-color);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.md-typeset .highlight code {
+  background: transparent;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  font-weight: 400;
+}
+
+/* Feature Cards */
+.md-typeset p:has(strong:first-child) {
+  background: var(--hermez-gradient-subtle);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  position: relative;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.md-typeset p:has(strong:first-child):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hermez-shadow-xl);
+  border-color: var(--hermez-primary);
+}
+
+.md-typeset p:has(strong:first-child) strong:first-child {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--hermez-primary);
+}
+
+/* Enhanced Lists */
+.md-typeset ul li {
+  margin: 0.75rem 0;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.md-typeset ul li::marker {
+  color: var(--hermez-primary);
+  font-weight: 600;
+}
+
+.md-typeset ul li strong {
+  color: var(--md-primary-fg-color);
+  font-weight: 600;
+}
+
+/* Flow Diagram Styling */
+.md-typeset pre:has(code:contains("Codebase")) {
+  background: var(--hermez-gradient-subtle);
+  border: 2px solid var(--hermez-primary);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  font-family: var(--hermez-font-display);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--md-primary-fg-color);
+  box-shadow: var(--hermez-shadow-lg);
+}
+
+/* Integration Section Grid */
+.md-typeset h3:contains("Command Line") ~ pre,
+.md-typeset h3:contains("AI Assistants") ~ pre,
+.md-typeset h3:contains("Python Library") ~ pre,
+.md-typeset h3:contains("CI/CD Pipeline") ~ pre {
+  position: relative;
+}
+
+.md-typeset h3:contains("Command Line") ~ pre::before { content: "🖥️"; }
+.md-typeset h3:contains("AI Assistants") ~ pre::before { content: "🤖"; }
+.md-typeset h3:contains("Python Library") ~ pre::before { content: "🐍"; }
+.md-typeset h3:contains("CI/CD Pipeline") ~ pre::before { content: "⚙️"; }
+
+.md-typeset h3:contains("Command Line") ~ pre::before,
+.md-typeset h3:contains("AI Assistants") ~ pre::before,
+.md-typeset h3:contains("Python Library") ~ pre::before,
+.md-typeset h3:contains("CI/CD Pipeline") ~ pre::before {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  z-index: 1;
+}
+
+/* Call-to-Action Styling */
+.md-typeset p:has(a[href="Quickstart.md"]) {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: var(--hermez-gradient-subtle);
+  border-radius: 1rem;
+  border: 2px solid var(--hermez-primary);
+}
+
+.md-typeset p:has(a[href="Quickstart.md"]) a {
+  display: inline-block;
+  background: var(--hermez-gradient);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: var(--hermez-shadow-lg);
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.md-typeset p:has(a[href="Quickstart.md"]) a:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hermez-shadow-xl);
+  filter: brightness(1.1);
+}
+
+/* Footer Quote Styling */
+.md-typeset hr + p {
+  text-align: center;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--md-default-fg-color--light);
+  margin: 2rem 0;
+  padding: 1rem;
+  position: relative;
+}
+
+.md-typeset hr + p::before,
+.md-typeset hr + p::after {
+  content: '"';
+  font-size: 2rem;
+  color: var(--hermez-primary);
+  font-weight: 300;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .md-typeset h1:first-child {
+    font-size: 2.5rem;
+  }
+
+  .md-typeset h2 {
+    font-size: 2rem;
+  }
+
+  .md-typeset h3 {
+    font-size: 1.5rem;
+  }
+
+  .md-typeset p:has(strong:first-child) {
+    padding: 1rem;
+  }
+}
+
+/* Dark Mode Adjustments */
+[data-md-color-scheme="slate"] {
+  --hermez-gradient-subtle: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 50%, rgba(236, 72, 153, 0.15) 100%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight {
+  border-color: var(--md-default-fg-color--lightest);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+}
+
+[data-md-color-scheme="slate"] .md-typeset p:has(strong:first-child):hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+}
+
+/* Smooth Animations */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-default-bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hermez-gradient);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.1);
+}

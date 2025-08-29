@@ -1,3 +1,8 @@
+---
+title: HermezOS - Messenger of Unwritten Rules
+description: Local-first knowledge registry that transforms your team's unwritten rules into deterministic, AI-ready context packs.
+---
+
 # HermezOS
 *Messenger of unwritten rules*
 
