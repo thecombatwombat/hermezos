@@ -3,7 +3,12 @@
 from pathlib import Path
 from typing import Any
 
-import tomli
+try:
+    import tomllib as _toml  # Python 3.11+
+    TOMLDecodeError = _toml.TOMLDecodeError
+except ModuleNotFoundError:
+    import tomli as _toml  # type: ignore[no-redef]
+    from tomli import TOMLDecodeError  # type: ignore
 
 
 class Config:
@@ -25,8 +30,8 @@ class Config:
         """Load configuration from TOML file."""
         try:
             with open(self.config_path, "rb") as f:
-                self._config = tomli.load(f)
-        except tomli.TOMLDecodeError as e:
+                self._config = _toml.load(f)
+        except TOMLDecodeError as e:
             # Re-raise TOML parsing errors so CLI can handle them
             raise ValueError(
                 f"Invalid TOML configuration in {self.config_path}: {e}"
