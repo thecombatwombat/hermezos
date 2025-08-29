@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .config import Config
+from .mcp.server import main as mcp_main
 from .models import (
     Action,
     ActionType,
@@ -22,7 +23,6 @@ from .models import (
 )
 from .packer import RulePacker
 from .storage.filesystem import FileSystemStorage
-from .mcp.server import main as mcp_main
 
 # Exit codes
 EXIT_OK = 0

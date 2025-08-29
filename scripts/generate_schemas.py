@@ -97,7 +97,10 @@ except ImportError as e:
                 "required": ["author", "created", "last_updated"]
             }
         },
-        "required": ["schema_version", "id", "name", "version", "status", "severity", "domain", "action", "provenance"]
+        "required": [
+            "schema_version", "id", "name", "version", "status",
+            "severity", "domain", "action", "provenance"
+        ]
     }
 
     # PackRequest schema
@@ -139,7 +142,10 @@ except ImportError as e:
             "created_at": {"type": "string"},
             "total_rules": {"type": "integer"}
         },
-        "required": ["pack_request", "rules", "pack_fingerprint", "created_at", "total_rules"],
+        "required": [
+            "pack_request", "rules", "pack_fingerprint",
+            "created_at", "total_rules"
+        ],
         "$defs": {
             "RuleCard": rulecard_schema,
             "PackRequest": packrequest_schema
@@ -149,15 +155,15 @@ except ImportError as e:
     # Write schemas
     with open(schemas_dir / "rulecard.json", 'w') as f:
         json.dump(rulecard_schema, f, indent=2)
-    print(f"Created rulecard.json")
+    print("Created rulecard.json")
 
     with open(schemas_dir / "packrequest.json", 'w') as f:
         json.dump(packrequest_schema, f, indent=2)
-    print(f"Created packrequest.json")
+    print("Created packrequest.json")
 
     with open(schemas_dir / "packbundle.json", 'w') as f:
         json.dump(packbundle_schema, f, indent=2)
-    print(f"Created packbundle.json")
+    print("Created packbundle.json")
 
     # RuleMatch schema
     rulematch_schema = {
@@ -175,7 +181,8 @@ except ImportError as e:
 
     with open(schemas_dir / "rulematch.json", 'w') as f:
         json.dump(rulematch_schema, f, indent=2)
-    print(f"Created rulematch.json")
+    print("Created rulematch.json")
 
 if __name__ == "__main__":
     print("Schema generation complete!")
+
