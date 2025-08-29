@@ -118,8 +118,6 @@ nav:
   - Quickstart: Quickstart.md
   - MCP: MCP.md
   - Contributing: contrib.md
-  - Android:
-    - Gradle Plugins: android/gradle_plugins.md
 
 plugins:
   - search:
