@@ -1,2 +1,2 @@
 # hermezos
-Messenger of unwritten rules
+Messenger of Unwritten Rules
