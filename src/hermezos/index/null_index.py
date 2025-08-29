@@ -1,5 +1,7 @@
 """Null index implementation - no-op for backward compatibility."""
 
+from __future__ import annotations
+
 from ..models import PackRequest, RuleCard
 
 

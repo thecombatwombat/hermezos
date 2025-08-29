@@ -1,5 +1,7 @@
 """Core data models for HermezOS."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 from datetime import datetime
@@ -188,7 +190,7 @@ class RuleCard(BaseModel):
             return False
         return bool(v)
 
-    def normalize(self) -> "RuleCard":
+    def normalize(self) -> RuleCard:
         """Normalize rule card by applying derived defaults and validations.
 
         Returns:
@@ -274,7 +276,7 @@ class PackBundle(BaseModel):
     )
 
     @model_validator(mode="after")
-    def compute_fingerprint(self) -> "PackBundle":
+    def compute_fingerprint(self) -> PackBundle:
         """Compute pack fingerprint from rule fingerprints using canonical JSON."""
         # Sort rules by fingerprint for deterministic ordering
         sorted_rules = (

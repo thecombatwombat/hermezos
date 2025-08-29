@@ -7,7 +7,7 @@ import pytest
 
 def test_graphiti_lazy_import_error():
     """Test that GraphitiIndex raises helpful error when requests is missing."""
-    from src.hermezos.index.graphiti import _get_requests
+    from hermezos.index.graphiti import _get_requests
 
     # Mock requests import to fail
     with patch.dict("sys.modules", {"requests": None}):
@@ -24,7 +24,7 @@ def test_graphiti_lazy_import_error():
 
 def test_kuzu_lazy_import_error():
     """Test that KuzuIndex raises helpful error when kuzu is missing."""
-    from src.hermezos.index.kuzu_index import _get_kuzu
+    from hermezos.index.kuzu_index import _get_kuzu
 
     # Mock kuzu import to fail
     with patch.dict("sys.modules", {"kuzu": None}):
@@ -44,9 +44,9 @@ def test_index_factory_disabled_indexing():
     import tempfile
     from pathlib import Path
 
-    from src.hermezos.config import Config
-    from src.hermezos.index import make_index
-    from src.hermezos.index.null_index import NullIndex
+    from hermezos.config import Config
+    from hermezos.index import make_index
+    from hermezos.index.null_index import NullIndex
 
     # Create a temporary config file with indexing disabled
     with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
@@ -75,7 +75,7 @@ def test_bootstrap_command_help():
     import typer
     from typer.testing import CliRunner
 
-    from src.hermezos.cli import bootstrap
+    from hermezos.cli import bootstrap
 
     app = typer.Typer()
     app.command()(bootstrap)
@@ -95,7 +95,7 @@ def test_bootstrap_unknown_feature():
     import typer
     from typer.testing import CliRunner
 
-    from src.hermezos.cli import bootstrap
+    from hermezos.cli import bootstrap
 
     app = typer.Typer()
     app.command()(bootstrap)

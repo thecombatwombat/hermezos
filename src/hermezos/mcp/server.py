@@ -1,5 +1,7 @@
 """MCP Server implementation for HermezOS."""
 
+from __future__ import annotations
+
 import json
 import sys
 from datetime import datetime
