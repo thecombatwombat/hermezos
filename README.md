@@ -208,20 +208,18 @@ print(f"Fingerprint: {bundle.pack_fingerprint}")
 
 ## MCP Integration
 
-HermezOS exposes MCP tools for AI assistants:
+HermezOS exposes MCP tools for AI assistants. For detailed setup instructions, see [AGENTS.md](AGENTS.md).
 
-### Available Tools
+### Quick Start
 
-- `hermez.pack`: Pack rules for analysis
-- `hermez.add_rule`: Create new rule templates
+**Run:** `hermez mcp`
+
+**Tools exposed:** `hermez.pack`, `hermez.add_rule`
 
 ### Usage with MCP Clients
 
 ```bash
 # Run MCP server
-python -m hermezos.mcp.server
-
-# Or via CLI
 hermez mcp
 ```
 

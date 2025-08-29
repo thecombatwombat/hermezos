@@ -2,6 +2,30 @@
 
 This document describes how AI agents and automation tools can integrate with HermezOS using the CLI and MCP (Model Context Protocol) interfaces.
 
+## Cursor/Windsurf Quick Setup
+
+Add this to your `settings.json` or `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "HermezOS": {
+      "command": "hermez",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Test Commands:**
+```bash
+# Test MCP server startup
+hermez mcp
+
+# Example tool call
+hermez pack --path . --json -
+```
+
 ## Overview
 
 HermezOS provides two primary interfaces for agent integration:

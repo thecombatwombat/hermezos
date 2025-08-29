@@ -22,6 +22,7 @@ from .models import (
 )
 from .packer import RulePacker
 from .storage.filesystem import FileSystemStorage
+from .mcp.server import main as mcp_main
 
 # Exit codes
 EXIT_OK = 0
@@ -634,6 +635,19 @@ def doctor(
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
         console.print(f"[red]Doctor check failed: {e}[/red]")
+        raise typer.Exit(EXIT_IO_ERROR) from e
+
+
+@app.command()
+def mcp() -> None:
+    """Start the MCP (Model Context Protocol) server."""
+    try:
+        mcp_main()
+    except KeyboardInterrupt:
+        # Handle graceful shutdown
+        pass
+    except Exception as e:
+        console.print(f"[red]MCP server failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
 
 
