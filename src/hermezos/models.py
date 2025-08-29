@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -85,7 +85,7 @@ class Reference(BaseModel):
     """Reference model for documentation links."""
 
     doc_url: str = Field(..., description="URL to documentation")
-    note: Union[str, None] = Field(None, description="Optional note about the reference")
+    note: str | None = Field(None, description="Optional note about the reference")
 
 
 class Provenance(BaseModel):
@@ -121,17 +121,17 @@ class Detector(BaseModel):
     """Detector for rule conditions."""
 
     type: DetectorType = Field(..., description="Type of detector")
-    file_glob: Union[str, None] = Field(None, description="File glob pattern for detection")
-    pattern: Union[str, None] = Field(None, description="Regex pattern for detection")
-    value: Union[str, None] = Field(None, description="Value for detection")
+    file_glob: str | None = Field(None, description="File glob pattern for detection")
+    pattern: str | None = Field(None, description="Regex pattern for detection")
+    value: str | None = Field(None, description="Value for detection")
 
 
 class Action(BaseModel):
     """Action to take when rule is triggered."""
 
     type: ActionType = Field(..., description="Type of action")
-    fix_command: Union[str, None] = Field(None, description="Command to fix the issue")
-    steps: Union[list[str], None] = Field(None, description="Manual steps to resolve")
+    fix_command: str | None = Field(None, description="Command to fix the issue")
+    steps: list[str] | None = Field(None, description="Manual steps to resolve")
 
 
 class RuleCard(BaseModel):
@@ -155,8 +155,8 @@ class RuleCard(BaseModel):
         default_factory=list, description="Detection conditions"
     )
     action: Action = Field(..., description="Action to take")
-    hint: Union[str, None] = Field(None, description="Helpful hint for the rule")
-    retriable: Union[bool, None] = Field(
+    hint: str | None = Field(None, description="Helpful hint for the rule")
+    retriable: bool | None = Field(
         None, description="Whether the action can be retried"
     )
     references: list[Reference] = Field(
@@ -177,7 +177,7 @@ class RuleCard(BaseModel):
 
     @field_validator("retriable", mode="before")
     @classmethod
-    def set_default_retriable(cls, v: Union[bool, None], info: Any) -> bool:
+    def set_default_retriable(cls, v: bool | None, info: Any) -> bool:
         """Set default retriable based on action type."""
         if v is None:
             # Get the action from the model
@@ -224,13 +224,13 @@ class PackRequest(BaseModel):
     """Request model for packing operations."""
 
     path: str = Field(..., description="Path to analyze")
-    intent_tags: Union[list[str], None] = Field(None, description="Filter by intent tags")
-    languages: Union[list[str], None] = Field(
+    intent_tags: list[str] | None = Field(None, description="Filter by intent tags")
+    languages: list[str] | None = Field(
         None, description="Filter by programming languages"
     )
-    limit: Union[int, None] = Field(None, description="Maximum number of rules to return")
+    limit: int | None = Field(None, description="Maximum number of rules to return")
     include_deprecated: bool = Field(False, description="Include deprecated rules")
-    file_globs: Union[list[str], None] = Field(
+    file_globs: list[str] | None = Field(
         None, description="File glob patterns to constrain file walker"
     )
 
@@ -276,22 +276,23 @@ class PackBundle(BaseModel):
     @model_validator(mode="after")
     def compute_fingerprint(self) -> "PackBundle":
         """Compute pack fingerprint from rule fingerprints using canonical JSON."""
-        if self.rules:
-            # Sort rules by fingerprint for deterministic ordering
-            sorted_rules = sorted(self.rules, key=lambda r: r.fingerprint)
-            rule_fps = [r.fingerprint for r in sorted_rules]
+        # Sort rules by fingerprint for deterministic ordering
+        sorted_rules = (
+            sorted(self.rules, key=lambda r: r.fingerprint) if self.rules else []
+        )
+        rule_fps = [r.fingerprint for r in sorted_rules]
 
-            # Include pack request in fingerprint computation
-            pack_data = {
-                "request": self.pack_request.model_dump(),
-                "rule_fingerprints": rule_fps,
-                "created_at": self.created_at,
-            }
+        # Include pack request in fingerprint computation (always generate fingerprint)
+        pack_data = {
+            "request": self.pack_request.model_dump(),
+            "rule_fingerprints": rule_fps,
+            "created_at": self.created_at,
+        }
 
-            canonical_json = to_canonical_json(pack_data)
-            self.pack_fingerprint = hashlib.sha256(
-                canonical_json.encode("utf-8")
-            ).hexdigest()
+        canonical_json = to_canonical_json(pack_data)
+        self.pack_fingerprint = hashlib.sha256(
+            canonical_json.encode("utf-8")
+        ).hexdigest()
 
         self.total_rules = len(self.rules)
         return self

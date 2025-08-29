@@ -3,7 +3,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Union, Any
+from typing import Any
 
 import ruamel.yaml
 from pydantic import ValidationError
@@ -138,7 +138,7 @@ class FileSystemStorage:
             if temp_path and temp_path.exists():
                 temp_path.unlink(missing_ok=True)
 
-    def _load_rule_from_file(self, path: Path) -> Union[RuleCard, None]:
+    def _load_rule_from_file(self, path: Path) -> RuleCard | None:
         """Load a rule card from a YAML file."""
         try:
             with open(path, encoding="utf-8") as f:
@@ -160,7 +160,7 @@ class FileSystemStorage:
         ):
             return None
 
-    def list_rules(self, domain: Union[str, None] = None) -> list[RuleCard]:
+    def list_rules(self, domain: str | None = None) -> list[RuleCard]:
         """List all rule cards, optionally filtered by domain."""
         rules = []
 
@@ -186,7 +186,7 @@ class FileSystemStorage:
 
         return rules
 
-    def get_rule(self, rule_id: str) -> Union[RuleCard, None]:
+    def get_rule(self, rule_id: str) -> RuleCard | None:
         """Get a specific rule card by ID."""
         rule_path = self._get_rule_path(rule_id)
         return self._load_rule_from_file(rule_path)
@@ -264,3 +264,33 @@ class FileSystemStorage:
 
         except (OSError, ValueError) as e:
             errors.append(f"Error validating script permissions: {e}")
+
+    def validate_all_files(self) -> list[str]:
+        """Validate all YAML files in storage. Returns list of file errors."""
+        errors: list[str] = []
+
+        if not self.root_path.exists():
+            return errors
+
+        for yaml_file in self.root_path.rglob("*.yaml"):
+            try:
+                with open(yaml_file, encoding="utf-8") as f:
+                    data = self.yaml.load(f)
+
+                if data is None:
+                    continue
+
+                # Try to create RuleCard to validate structure
+                RuleCard(**data)
+
+            except (
+                OSError,
+                FileNotFoundError,
+                ValidationError,
+                ruamel.yaml.constructor.ConstructorError,
+                ruamel.yaml.parser.ParserError,
+                ruamel.yaml.scanner.ScannerError,
+            ) as e:
+                errors.append(f"Invalid file {yaml_file}: {e}")
+
+        return errors

@@ -6,7 +6,7 @@ import re
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Union, Any
+from typing import Any
 
 from .models import (
     DetectorType,
@@ -107,7 +107,7 @@ class RulePacker:
         return filtered
 
     def _filter_by_intent(
-        self, rules: list[RuleCard], intent_tags: Union[list[str], None]
+        self, rules: list[RuleCard], intent_tags: list[str] | None
     ) -> list[RuleCard]:
         """Filter rules by intent tags."""
         if not intent_tags:
@@ -129,7 +129,7 @@ class RulePacker:
         return filtered
 
     def _filter_by_languages(
-        self, rules: list[RuleCard], languages: Union[list[str], None]
+        self, rules: list[RuleCard], languages: list[str] | None
     ) -> list[RuleCard]:
         """Filter rules by programming languages."""
         if not languages:
@@ -382,7 +382,9 @@ class RulePacker:
             "limit": request.limit,
         }
 
-    def _normalize_rule_cards(self, rule_matches: list[RuleMatch]) -> list[dict[str, Any]]:
+    def _normalize_rule_cards(
+        self, rule_matches: list[RuleMatch]
+    ) -> list[dict[str, Any]]:
         """Normalize rule cards to JSON format with fingerprints."""
         normalized = []
         for match in rule_matches:

@@ -1,7 +1,7 @@
 """Configuration management for HermezOS."""
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import tomli
 
@@ -9,7 +9,7 @@ import tomli
 class Config:
     """Configuration manager for HermezOS."""
 
-    def __init__(self, config_path: Union[Path, None] = None):
+    def __init__(self, config_path: Path | None = None):
         """Initialize configuration from TOML file."""
         if config_path is None:
             # Default to hermez.toml in current directory
@@ -26,9 +26,16 @@ class Config:
         try:
             with open(self.config_path, "rb") as f:
                 self._config = tomli.load(f)
-        except Exception:
-            # Use defaults if loading fails
-            self._config = {}
+        except tomli.TOMLDecodeError as e:
+            # Re-raise TOML parsing errors so CLI can handle them
+            raise ValueError(
+                f"Invalid TOML configuration in {self.config_path}: {e}"
+            ) from e
+        except Exception as e:
+            # Re-raise other errors so CLI can handle them
+            raise ValueError(
+                f"Failed to load configuration from {self.config_path}: {e}"
+            ) from e
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key."""
@@ -48,11 +55,11 @@ class Config:
         """Get registry root path."""
         root_path = self.get("registry.root_path", "registry")
         registry_path = Path(root_path)
-        
+
         # If relative path, resolve relative to config file directory
         if not registry_path.is_absolute():
             registry_path = self.config_path.parent / registry_path
-            
+
         return registry_path
 
     @property
@@ -65,7 +72,9 @@ class Config:
     def sort_keys(self) -> list[str]:
         """Get sort keys for rule selection."""
         keys = self.get("packer.sort_keys", ["status", "severity", "version", "id"])
-        return list(keys) if keys is not None else ["status", "severity", "version", "id"]
+        return (
+            list(keys) if keys is not None else ["status", "severity", "version", "id"]
+        )
 
     @property
     def sort_orders(self) -> list[str]:

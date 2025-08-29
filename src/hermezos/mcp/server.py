@@ -4,7 +4,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from ..config import Config
 from ..models import (
@@ -42,7 +42,7 @@ except ImportError:
 class MCPServer:
     """MCP Server for HermezOS tools."""
 
-    def __init__(self, config_path: Union[Path, None] = None):
+    def __init__(self, config_path: Path | None = None):
         """Initialize MCP server."""
         self.config = Config(config_path)
         self.storage = FileSystemStorage(self.config.registry_root)
@@ -53,7 +53,7 @@ class MCPServer:
         json_str = json.dumps(response, separators=(",", ":"))
         print(json_str, flush=True)
 
-    def _send_error(self, error: str, id: Union[str, None] = None) -> None:
+    def _send_error(self, error: str, id: str | None = None) -> None:
         """Send error response."""
         response = {
             "jsonrpc": "2.0",
@@ -283,9 +283,9 @@ if HAS_NATIVE_MCP:
             @self.server.tool()
             async def hermez_pack(
                 path: str,
-                intent_tags: Union[list, None] = None,
-                languages: Union[list, None] = None,
-                limit: Union[int, None] = None,
+                intent_tags: list | None = None,
+                languages: list | None = None,
+                limit: int | None = None,
             ) -> str:
                 """Pack HermezOS rules for a given path."""
                 try:

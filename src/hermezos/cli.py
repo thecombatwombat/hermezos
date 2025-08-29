@@ -4,7 +4,6 @@ import builtins
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Union, List
 
 import typer
 from rich.console import Console
@@ -47,7 +46,7 @@ def get_packer(config: Config) -> RulePacker:
 
 @app.command()
 def init(
-    path: Union[Path, None] = typer.Option(
+    path: Path | None = typer.Option(
         None, "--path", help="Path to initialize (default: current directory)"
     ),
     force: bool = typer.Option(
@@ -237,7 +236,7 @@ provenance:
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Failed to initialize: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
@@ -249,12 +248,12 @@ provenance:
 def add(
     domain: str = typer.Argument(..., help="Rule domain"),
     name: str = typer.Argument(..., help="Rule name"),
-    path: Union[Path, None] = typer.Option(None, "--path", help="Path to HermezOS project"),
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
     status: Status = typer.Option(Status.DRAFT, "--status", help="Rule status"),
     severity: Severity = typer.Option(
         Severity.INFO, "--severity", help="Rule severity"
     ),
-    description: Union[str, None] = typer.Option(
+    description: str | None = typer.Option(
         None, "--description", help="Rule description"
     ),
 ) -> None:
@@ -262,7 +261,9 @@ def add(
     try:
         config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
         if not config_path.exists():
-            console.print(f"[red]HermezOS project not found at {config_path.parent}[/red]")
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
         config = Config(config_path)
         storage = get_storage(config)
@@ -317,7 +318,7 @@ def add(
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Failed to add rule: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
@@ -327,18 +328,26 @@ def add(
 
 @app.command()
 def list(
-    path: Union[Path, None] = typer.Option(None, "--path", help="Path to HermezOS project"),
-    domain: Union[str, None] = typer.Option(None, "--domain", help="Filter by domain"),
-    status: Union[Status, None] = typer.Option(None, "--status", help="Filter by status"),
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
+    domain: str | None = typer.Option(None, "--domain", help="Filter by domain"),
+    status: Status | None = typer.Option(None, "--status", help="Filter by status"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """List rule cards."""
     try:
         config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
         if not config_path.exists():
-            console.print(f"[red]HermezOS project not found at {config_path.parent}[/red]")
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
-        config = Config(config_path)
+
+        try:
+            config = Config(config_path)
+        except ValueError as e:
+            console.print(f"[red]Configuration error: {e}[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE) from e
+
         storage = get_storage(config)
 
         rules = storage.list_rules(domain)
@@ -374,7 +383,7 @@ def list(
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Failed to list rules: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
@@ -384,8 +393,8 @@ def list(
 
 @app.command()
 def validate(
-    path: Union[Path, None] = typer.Option(None, "--path", help="Path to HermezOS project"),
-    rule_id: Union[str, None] = typer.Option(None, "--rule", help="Validate specific rule"),
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
+    rule_id: str | None = typer.Option(None, "--rule", help="Validate specific rule"),
     strict: bool = typer.Option(
         True, "--strict/--no-strict", help="Enable strict validation"
     ),
@@ -397,10 +406,26 @@ def validate(
     try:
         config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
         if not config_path.exists():
-            console.print(f"[red]HermezOS project not found at {config_path.parent}[/red]")
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
-        config = Config(config_path)
+
+        try:
+            config = Config(config_path)
+        except ValueError as e:
+            console.print(f"[red]Configuration error: {e}[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE) from e
+
         storage = get_storage(config)
+
+        # First check for invalid YAML files
+        file_errors = storage.validate_all_files()
+        if file_errors:
+            console.print("[red]Invalid YAML files found:[/red]")
+            for error in file_errors:
+                console.print(f"  [red]- {error}[/red]")
+            raise typer.Exit(EXIT_VALIDATION_ERROR)
 
         if rule_id:
             rule = storage.get_rule(rule_id)
@@ -449,7 +474,7 @@ def validate(
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Validation failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
@@ -460,13 +485,13 @@ def validate(
 @app.command()
 def pack(
     path: str = typer.Argument(..., help="Path to analyze"),
-    intent_tags: Union[List[str], None] = typer.Option(
+    intent_tags: builtins.list[str] | None = typer.Option(
         None, "--intent", help="Filter by intent tags"
     ),
-    languages: Union[List[str], None] = typer.Option(
+    languages: builtins.list[str] | None = typer.Option(
         None, "--lang", help="Filter by programming languages"
     ),
-    limit: Union[int, None] = typer.Option(None, "--limit", help="Maximum number of rules"),
+    limit: int | None = typer.Option(None, "--limit", help="Maximum number of rules"),
     include_deprecated: bool = typer.Option(
         False, "--include-deprecated", help="Include deprecated rules"
     ),
@@ -474,7 +499,7 @@ def pack(
     output_file: str = typer.Option(
         "-", "--output", help="Output file (default: stdout)"
     ),
-    project_path: Union[Path, None] = typer.Option(
+    project_path: Path | None = typer.Option(
         None, "--project-path", help="Path to HermezOS project"
     ),
 ) -> None:
@@ -540,7 +565,7 @@ def pack(
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Packing failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
@@ -550,7 +575,7 @@ def pack(
 
 @app.command()
 def doctor(
-    path: Union[Path, None] = typer.Option(None, "--path", help="Path to HermezOS project")
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project")
 ) -> None:
     """Check HermezOS installation and configuration."""
     try:
@@ -604,7 +629,7 @@ def doctor(
     except typer.Exit:
         # Re-raise typer.Exit exceptions (preserve exit codes)
         raise
-    except (OSError, IOError, PermissionError) as e:
+    except (OSError, PermissionError) as e:
         console.print(f"[red]Doctor check failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
     except Exception as e:
