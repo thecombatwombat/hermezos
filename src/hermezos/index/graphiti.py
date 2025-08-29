@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from ..models import PackRequest, RuleCard
-from . import IndexAdapter
 
 logger = logging.getLogger(__name__)
 
 # Lazy import for optional dependency
 _requests = None
+
 
 def _get_requests():
     """Lazy import requests with helpful error message."""
@@ -21,18 +21,20 @@ def _get_requests():
     if _requests is None:
         try:
             import requests
+
             _requests = requests
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "The 'requests' library is required for Graphiti live mode. "
-                "Install it with: pip install 'hermezos[indexing]' or run: hermez bootstrap"
-            )
+                "Install it with: pip install 'hermezos[indexing]' or run: "
+                "hermez bootstrap"
+            ) from err
     return _requests
 
 
 class GraphitiIndex:
     """Graphiti index adapter with export_only and live modes.
-    
+
     In export_only mode (default), writes deterministic JSONL files to disk.
     In live mode, sends data to Graphiti server via HTTP API.
     """
@@ -45,7 +47,7 @@ class GraphitiIndex:
         export_path: Path = Path("graph"),
     ):
         """Initialize Graphiti index.
-        
+
         Args:
             mode: "export_only" or "live"
             url: Graphiti server URL (for live mode)
@@ -56,24 +58,24 @@ class GraphitiIndex:
         self.url = url.rstrip("/")
         self.api_key = api_key
         self.export_path = export_path
-        
+
         # In-memory storage for export_only mode
         self._nodes: dict[str, dict[str, Any]] = {}
         self._edges: list[dict[str, Any]] = []
-        
+
         if self.mode == "export_only":
             # Ensure export directory exists
             self.export_path.mkdir(parents=True, exist_ok=True)
 
     def candidate_ids(self, request: PackRequest) -> list[str]:
         """Get candidate rule IDs for the given pack request.
-        
+
         In export_only mode, returns empty list (no filtering).
         In live mode, could query Graphiti server but returns empty for now.
-        
+
         Args:
             request: Pack request with filtering criteria
-            
+
         Returns:
             Empty list (no prefiltering in current implementation)
         """
@@ -83,7 +85,7 @@ class GraphitiIndex:
 
     def upsert_card(self, card: RuleCard) -> None:
         """Insert or update a rule card in the index.
-        
+
         Args:
             card: Rule card to upsert
         """
@@ -94,7 +96,7 @@ class GraphitiIndex:
 
     def delete_card(self, card_id: str) -> None:
         """Delete a rule card from the index.
-        
+
         Args:
             card_id: ID of the rule card to delete
         """
@@ -122,7 +124,7 @@ class GraphitiIndex:
             "name": card.name,
         }
         self._nodes[card.id] = rule_node
-        
+
         # Create domain node
         domain_id = f"domain:{card.domain}"
         domain_node = {
@@ -131,7 +133,7 @@ class GraphitiIndex:
             "name": card.domain,
         }
         self._nodes[domain_id] = domain_node
-        
+
         # Create intent tag nodes
         for tag in card.intent_tags:
             tag_id = f"tag:{tag}"
@@ -141,7 +143,7 @@ class GraphitiIndex:
                 "name": tag,
             }
             self._nodes[tag_id] = tag_node
-        
+
         # Create document nodes for references
         for ref in card.references:
             if ref.doc_url.startswith(("./", "../")):
@@ -153,57 +155,74 @@ class GraphitiIndex:
                     "note": ref.note,
                 }
                 self._nodes[doc_id] = doc_node
-        
+
         # Remove old edges for this card
         self._edges = [e for e in self._edges if e.get("source") != card.id]
-        
+
         # Create edges
         # RuleCard -> Domain
-        self._edges.append({
-            "source": card.id,
-            "target": domain_id,
-            "type": "OF_DOMAIN",
-        })
-        
+        self._edges.append(
+            {
+                "source": card.id,
+                "target": domain_id,
+                "type": "OF_DOMAIN",
+            }
+        )
+
         # RuleCard -> IntentTag
         for tag in card.intent_tags:
-            self._edges.append({
-                "source": card.id,
-                "target": f"tag:{tag}",
-                "type": "HAS_TAG",
-            })
-        
+            self._edges.append(
+                {
+                    "source": card.id,
+                    "target": f"tag:{tag}",
+                    "type": "HAS_TAG",
+                }
+            )
+
         # RuleCard -> Doc
         for ref in card.references:
             if ref.doc_url.startswith(("./", "../")):
-                self._edges.append({
-                    "source": card.id,
-                    "target": f"doc:{ref.doc_url}",
-                    "type": "DOC",
-                })
+                self._edges.append(
+                    {
+                        "source": card.id,
+                        "target": f"doc:{ref.doc_url}",
+                        "type": "DOC",
+                    }
+                )
 
     def _delete_card_export(self, card_id: str) -> None:
         """Delete card from export mode - remove from memory."""
         # Remove node
         self._nodes.pop(card_id, None)
-        
+
         # Remove edges
-        self._edges = [e for e in self._edges if e.get("source") != card_id and e.get("target") != card_id]
+        self._edges = [
+            e
+            for e in self._edges
+            if e.get("source") != card_id and e.get("target") != card_id
+        ]
 
     def _write_export_files(self) -> None:
         """Write nodes and edges to JSONL files atomically."""
         try:
             # Write nodes.jsonl
             nodes_path = self.export_path / "nodes.jsonl"
-            self._write_jsonl_atomic(nodes_path, sorted(self._nodes.values(), key=lambda x: x["id"]))
-            
+            self._write_jsonl_atomic(
+                nodes_path, sorted(self._nodes.values(), key=lambda x: x["id"])
+            )
+
             # Write edges.jsonl
             edges_path = self.export_path / "edges.jsonl"
-            sorted_edges = sorted(self._edges, key=lambda x: (x["source"], x["target"], x["type"]))
+            sorted_edges = sorted(
+                self._edges, key=lambda x: (x["source"], x["target"], x["type"])
+            )
             self._write_jsonl_atomic(edges_path, sorted_edges)
-            
-            logger.info(f"Exported {len(self._nodes)} nodes and {len(self._edges)} edges to {self.export_path}")
-            
+
+            logger.info(
+                f"Exported {len(self._nodes)} nodes and "
+                f"{len(self._edges)} edges to {self.export_path}"
+            )
+
         except Exception as e:
             logger.error(f"Failed to write export files: {e}")
 
@@ -212,27 +231,33 @@ class GraphitiIndex:
         # Create temporary file in same directory
         temp_fd = None
         temp_path = None
-        
+
         try:
             # Create temporary file
             temp_fd, temp_path_str = tempfile.mkstemp(
                 dir=path.parent, prefix=f"{path.name}.tmp.", suffix=".tmp"
             )
             temp_path = Path(temp_path_str)
-            
+
             # Write JSONL content to temporary file
             with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
                 for item in data:
-                    json.dump(item, f, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+                    json.dump(
+                        item,
+                        f,
+                        separators=(",", ":"),
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    )
                     f.write("\n")
                 f.flush()
                 os.fsync(f.fileno())  # Force write to disk
-            
+
             temp_fd = None  # Don't close again in finally
-            
+
             # Atomic rename
             temp_path.replace(path)
-            
+
         finally:
             if temp_fd is not None:
                 os.close(temp_fd)
@@ -247,14 +272,14 @@ class GraphitiIndex:
                 "rule_card": card.model_dump(),
                 "fingerprint": card.compute_fingerprint(),
             }
-            
+
             headers = {
                 "Content-Type": "application/json",
             }
-            
+
             if self.api_key:
                 headers["Authorization"] = f"Bearer {self.api_key}"
-            
+
             # Send to Graphiti server
             requests = _get_requests()
             response = requests.post(
@@ -263,10 +288,13 @@ class GraphitiIndex:
                 headers=headers,
                 timeout=30,
             )
-            
+
             if response.status_code not in (200, 201):
-                logger.warning(f"Failed to upsert card {card.id} to Graphiti: {response.status_code}")
-                
+                logger.warning(
+                    f"Failed to upsert card {card.id} to Graphiti: "
+                    f"{response.status_code}"
+                )
+
         except Exception as e:
             logger.warning(f"Failed to upsert card {card.id} to Graphiti: {e}")
 
@@ -276,7 +304,7 @@ class GraphitiIndex:
             headers = {}
             if self.api_key:
                 headers["Authorization"] = f"Bearer {self.api_key}"
-            
+
             # Send delete to Graphiti server
             requests = _get_requests()
             response = requests.delete(
@@ -284,9 +312,12 @@ class GraphitiIndex:
                 headers=headers,
                 timeout=30,
             )
-            
+
             if response.status_code not in (200, 204, 404):
-                logger.warning(f"Failed to delete card {card_id} from Graphiti: {response.status_code}")
-                
+                logger.warning(
+                    f"Failed to delete card {card_id} from Graphiti: "
+                    f"{response.status_code}"
+                )
+
         except Exception as e:
             logger.warning(f"Failed to delete card {card_id} from Graphiti: {e}")

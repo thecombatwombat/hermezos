@@ -47,7 +47,7 @@ hermez bootstrap
 # Install graph indexing dependencies
 hermez bootstrap indexing
 
-# Install MCP server dependencies  
+# Install MCP server dependencies
 hermez bootstrap mcp
 
 # Install all optional features

@@ -42,6 +42,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "types-PyYAML",
+    "pre-commit",
 ]
 mcp = [
     "mcp>=0.1.0",  # Placeholder for MCP dependency when available

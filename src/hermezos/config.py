@@ -5,6 +5,7 @@ from typing import Any
 
 try:
     import tomllib as _toml  # Python 3.11+
+
     TOMLDecodeError = _toml.TOMLDecodeError
 except ModuleNotFoundError:
     import tomli as _toml  # type: ignore[no-redef]

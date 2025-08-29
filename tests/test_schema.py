@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-
 from hermezos.models import (
     Action,
     ActionType,
@@ -503,7 +502,6 @@ class TestSchemaExport:
             patch("json.dump") as mock_dump,
             patch("builtins.print") as mock_print,
         ):
-
             # Create a temporary directory path
             output_dir = Path("/tmp/test_schemas")
 

@@ -619,7 +619,7 @@ index = make_index(config)
 try:
     rules = storage.list_rules()
     request = PackRequest(path=".", intent_tags=["security"])
-    
+
     # Index prefilters candidates if enabled
     bundle = packer.pack(rules, request, index)
 finally:

@@ -16,10 +16,10 @@ class IndexAdapter(Protocol):
 
     def candidate_ids(self, request: PackRequest) -> list[str]:
         """Get candidate rule IDs for the given pack request.
-        
+
         Args:
             request: Pack request with filtering criteria
-            
+
         Returns:
             List of rule IDs that match the request criteria.
             Empty list means no filtering (evaluate all rules).
@@ -28,7 +28,7 @@ class IndexAdapter(Protocol):
 
     def upsert_card(self, card: RuleCard) -> None:
         """Insert or update a rule card in the index.
-        
+
         Args:
             card: Rule card to upsert
         """
@@ -36,7 +36,7 @@ class IndexAdapter(Protocol):
 
     def delete_card(self, card_id: str) -> None:
         """Delete a rule card from the index.
-        
+
         Args:
             card_id: ID of the rule card to delete
         """
@@ -49,22 +49,24 @@ class IndexAdapter(Protocol):
 
 def make_index(config: Config) -> IndexAdapter:
     """Factory function to create an IndexAdapter based on configuration.
-    
+
     Args:
         config: HermezOS configuration
-        
+
     Returns:
         IndexAdapter instance based on config.graph_driver
     """
     if not config.graph_enabled or config.graph_driver == "null":
         from .null_index import NullIndex
+
         return NullIndex()
-    
+
     driver = config.graph_driver.lower()
-    
+
     try:
         if driver == "graphiti":
             from .graphiti import GraphitiIndex
+
             return GraphitiIndex(
                 mode=config.graph_mode,
                 url=config.graph_url,
@@ -73,15 +75,22 @@ def make_index(config: Config) -> IndexAdapter:
             )
         elif driver == "kuzu":
             from .kuzu_index import KuzuIndex
+
             return KuzuIndex(db_path=Path(config.graph_db_path))
         else:
-            logger.warning(f"Unknown graph driver '{driver}', falling back to null index")
+            logger.warning(
+                f"Unknown graph driver '{driver}', falling back to null index"
+            )
             from .null_index import NullIndex
+
             return NullIndex()
-            
+
     except Exception as e:
-        logger.warning(f"Failed to initialize {driver} index: {e}, falling back to null index")
+        logger.warning(
+            f"Failed to initialize {driver} index: {e}, falling back to null index"
+        )
         from .null_index import NullIndex
+
         return NullIndex()
 
 

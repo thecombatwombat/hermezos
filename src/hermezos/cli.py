@@ -1,9 +1,14 @@
 """Command-line interface for HermezOS."""
 
+from __future__ import annotations
+
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 
 import typer
 from rich.console import Console
@@ -48,6 +53,7 @@ def get_packer(config: Config) -> RulePacker:
 def get_index(config: Config):
     """Get index adapter from configuration."""
     from .index import make_index
+
     return make_index(config)
 
 
@@ -492,10 +498,10 @@ def validate(
 @app.command()
 def pack(
     path: str = typer.Argument(..., help="Path to analyze"),
-    intent_tags: List[str] | None = typer.Option(
+    intent_tags: list[str] | None = typer.Option(
         None, "--intent", help="Filter by intent tags"
     ),
-    languages: List[str] | None = typer.Option(
+    languages: list[str] | None = typer.Option(
         None, "--lang", help="Filter by programming languages"
     ),
     limit: int | None = typer.Option(None, "--limit", help="Maximum number of rules"),
@@ -590,7 +596,7 @@ def pack(
 
 @app.command()
 def doctor(
-    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project")
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
 ) -> None:
     """Check HermezOS installation and configuration."""
     try:
@@ -654,13 +660,17 @@ def doctor(
 
 @app.command()
 def bootstrap(
-    feature: str | None = typer.Argument(None, help="Feature to bootstrap (indexing, mcp, all)"),
-    force: bool = typer.Option(False, "--force", help="Force reinstall even if already installed"),
+    feature: str | None = typer.Argument(
+        None, help="Feature to bootstrap (indexing, mcp, all)"
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Force reinstall even if already installed"
+    ),
 ) -> None:
     """Bootstrap optional dependencies for HermezOS features."""
     import subprocess
     import sys
-    
+
     try:
         # Map features to extras
         feature_map = {
@@ -668,88 +678,99 @@ def bootstrap(
             "mcp": "mcp",
             "all": "all",
         }
-        
+
         if feature is None:
             # Show available features
             console.print("[blue]Available features to bootstrap:[/blue]")
-            console.print("  [cyan]indexing[/cyan] - Graph indexing with Graphiti and Kùzu")
+            console.print(
+                "  [cyan]indexing[/cyan] - Graph indexing with Graphiti and Kùzu"
+            )
             console.print("  [cyan]mcp[/cyan] - Model Context Protocol server support")
             console.print("  [cyan]all[/cyan] - All optional features")
             console.print("\n[yellow]Usage:[/yellow] hermez bootstrap <feature>")
             return
-            
+
         if feature not in feature_map:
-            console.print(f"[red]Unknown feature '{feature}'. Available: {', '.join(feature_map.keys())}[/red]")
+            console.print(
+                f"[red]Unknown feature '{feature}'. "
+                f"Available: {', '.join(feature_map.keys())}[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
-            
+
         extra = feature_map[feature]
-        
+
         # Check if already installed (unless force)
         if not force:
             missing_deps = []
-            
+
             if feature in ("indexing", "all"):
                 try:
-                    import requests
+                    import requests  # noqa: F401
                 except ImportError:
                     missing_deps.append("requests")
-                    
+
                 try:
-                    import kuzu
+                    import kuzu  # noqa: F401
                 except ImportError:
                     missing_deps.append("kuzu")
-                    
+
             if feature in ("mcp", "all"):
                 try:
-                    import mcp
+                    import mcp  # noqa: F401
                 except ImportError:
                     missing_deps.append("mcp")
-                    
+
             if not missing_deps:
-                console.print(f"[green]Feature '{feature}' is already installed![/green]")
+                console.print(
+                    f"[green]Feature '{feature}' is already installed![/green]"
+                )
                 console.print("[yellow]Use --force to reinstall[/yellow]")
                 return
-                
+
         # Install the feature
         console.print(f"[blue]Installing '{feature}' dependencies...[/blue]")
-        
+
         # Use pip to install the extra
         cmd = [sys.executable, "-m", "pip", "install", f"hermezos[{extra}]"]
         if force:
             cmd.append("--force-reinstall")
-            
+
         console.print(f"[dim]Running: {' '.join(cmd)}[/dim]")
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
-            console.print(f"[green]✓ Successfully installed '{feature}' dependencies![/green]")
-            
+            console.print(
+                f"[green]✓ Successfully installed '{feature}' dependencies![/green]"
+            )
+
             # Show what was installed
             if feature in ("indexing", "all"):
-                console.print("  [cyan]• requests[/cyan] - HTTP client for Graphiti live mode")
+                console.print(
+                    "  [cyan]• requests[/cyan] - HTTP client for Graphiti live mode"
+                )
                 console.print("  [cyan]• kuzu[/cyan] - Embedded graph database")
-                
+
             if feature in ("mcp", "all"):
                 console.print("  [cyan]• mcp[/cyan] - Model Context Protocol support")
-                
+
             console.print(f"\n[blue]You can now use '{feature}' features![/blue]")
-            
+
             # Show next steps
             if feature in ("indexing", "all"):
                 console.print("\n[yellow]Next steps for indexing:[/yellow]")
                 console.print("1. Enable indexing in hermez.toml:")
                 console.print("   [graph]")
                 console.print("   enabled = true")
-                console.print("   driver = \"graphiti\"  # or \"kuzu\"")
+                console.print('   driver = "graphiti"  # or "kuzu"')
                 console.print("2. Run: hermez graph doctor")
                 console.print("3. Export rules: hermez graph export")
-                
+
         else:
-            console.print(f"[red]✗ Installation failed![/red]")
+            console.print("[red]✗ Installation failed![/red]")
             console.print(f"[red]Error: {result.stderr}[/red]")
             raise typer.Exit(EXIT_IO_ERROR)
-            
+
     except typer.Exit:
         raise
     except Exception as e:
@@ -776,45 +797,53 @@ def export(
             raise typer.Exit(EXIT_BAD_USAGE)
 
         config = Config(config_path)
-        
+
         if not config.graph_enabled:
-            console.print("[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]")
+            console.print(
+                "[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]"
+            )
             console.print("[yellow][graph][/yellow]")
             console.print("[yellow]enabled = true[/yellow]")
-            console.print("[yellow]driver = \"graphiti\"[/yellow]")
+            console.print('[yellow]driver = "graphiti"[/yellow]')
             raise typer.Exit(EXIT_OK)
-            
+
         if config.graph_driver != "graphiti":
-            console.print(f"[red]Export requires driver='graphiti', got '{config.graph_driver}'[/red]")
+            console.print(
+                f"[red]Export requires driver='graphiti', "
+                f"got '{config.graph_driver}'[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
 
         storage = get_storage(config)
         index = get_index(config)
-        
+
         try:
             # Load all rules and upsert to index
             rules = storage.list_rules()
             console.print(f"[blue]Loading {len(rules)} rules...[/blue]")
-            
+
             for rule in rules:
                 index.upsert_card(rule)
-            
+
             # Close index to trigger export
             index.close()
-            
+
             # Report results
             export_path = Path(config.graph_export_path)
             nodes_file = export_path / "nodes.jsonl"
             edges_file = export_path / "edges.jsonl"
-            
+
             if nodes_file.exists() and edges_file.exists():
                 nodes_count = sum(1 for _ in open(nodes_file))
                 edges_count = sum(1 for _ in open(edges_file))
-                console.print(f"[green]Exported {nodes_count} nodes and {edges_count} edges[/green]")
+                console.print(
+                    f"[green]Exported {nodes_count} nodes and "
+                    f"{edges_count} edges[/green]"
+                )
                 console.print(f"[blue]Files: {nodes_file}, {edges_file}[/blue]")
             else:
                 console.print("[yellow]Export completed but files not found[/yellow]")
-                
+
         finally:
             if index:
                 index.close()
@@ -840,36 +869,45 @@ def sync(
             raise typer.Exit(EXIT_BAD_USAGE)
 
         config = Config(config_path)
-        
+
         if not config.graph_enabled:
-            console.print("[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]")
+            console.print(
+                "[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]"
+            )
             console.print("[yellow][graph][/yellow]")
             console.print("[yellow]enabled = true[/yellow]")
-            console.print("[yellow]driver = \"graphiti\"[/yellow]")
-            console.print("[yellow]mode = \"live\"[/yellow]")
+            console.print('[yellow]driver = "graphiti"[/yellow]')
+            console.print('[yellow]mode = "live"[/yellow]')
             raise typer.Exit(EXIT_OK)
-            
+
         if config.graph_driver != "graphiti":
-            console.print(f"[red]Sync requires driver='graphiti', got '{config.graph_driver}'[/red]")
+            console.print(
+                f"[red]Sync requires driver='graphiti', "
+                f"got '{config.graph_driver}'[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
-            
+
         if config.graph_mode != "live":
-            console.print(f"[red]Sync requires mode='live', got '{config.graph_mode}'[/red]")
+            console.print(
+                f"[red]Sync requires mode='live', got '{config.graph_mode}'[/red]"
+            )
             raise typer.Exit(EXIT_BAD_USAGE)
 
         storage = get_storage(config)
         index = get_index(config)
-        
+
         try:
             # Load all rules and sync to server
             rules = storage.list_rules()
-            console.print(f"[blue]Syncing {len(rules)} rules to {config.graph_url}...[/blue]")
-            
+            console.print(
+                f"[blue]Syncing {len(rules)} rules to {config.graph_url}...[/blue]"
+            )
+
             for rule in rules:
                 index.upsert_card(rule)
-            
+
             console.print("[green]Sync completed[/green]")
-                
+
         finally:
             if index:
                 index.close()
@@ -895,78 +933,104 @@ def graph_doctor(
             raise typer.Exit(EXIT_BAD_USAGE)
 
         config = Config(config_path)
-        
+
         # Display configuration
         table = Table(title="Graph Indexing Configuration")
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="white")
-        
+
         table.add_row("Enabled", str(config.graph_enabled))
         table.add_row("Driver", config.graph_driver)
         table.add_row("Mode", config.graph_mode)
-        
+
         if config.graph_driver == "graphiti":
             table.add_row("URL", config.graph_url)
             table.add_row("Export Path", config.graph_export_path)
         elif config.graph_driver == "kuzu":
             table.add_row("DB Path", config.graph_db_path)
-            
+
         console.print(table)
-        
+
         # Health checks
         checks = []
-        
+
         if not config.graph_enabled:
             checks.append(("Graph indexing", False, "Disabled in configuration"))
         else:
-            checks.append(("Graph indexing", True, f"Enabled with driver '{config.graph_driver}'"))
-            
+            checks.append(
+                ("Graph indexing", True, f"Enabled with driver '{config.graph_driver}'")
+            )
+
             # Driver-specific checks
             if config.graph_driver == "graphiti":
                 if config.graph_mode == "live":
                     # Test connection to Graphiti server
                     try:
-                        import requests
+                        import requests  # noqa: F401
+
                         response = requests.head(config.graph_url, timeout=5)
                         if response.status_code < 400:
-                            checks.append(("Graphiti server", True, f"Reachable at {config.graph_url}"))
+                            checks.append(
+                                (
+                                    "Graphiti server",
+                                    True,
+                                    f"Reachable at {config.graph_url}",
+                                )
+                            )
                         else:
-                            checks.append(("Graphiti server", False, f"HTTP {response.status_code}"))
+                            checks.append(
+                                (
+                                    "Graphiti server",
+                                    False,
+                                    f"HTTP {response.status_code}",
+                                )
+                            )
                     except Exception as e:
-                        checks.append(("Graphiti server", False, f"Connection failed: {e}"))
+                        checks.append(
+                            ("Graphiti server", False, f"Connection failed: {e}")
+                        )
                 else:
                     # Check export directory
                     export_path = Path(config.graph_export_path)
                     if export_path.exists():
-                        checks.append(("Export directory", True, f"Exists at {export_path}"))
+                        checks.append(
+                            ("Export directory", True, f"Exists at {export_path}")
+                        )
                     else:
-                        checks.append(("Export directory", False, f"Not found: {export_path}"))
-                        
+                        checks.append(
+                            ("Export directory", False, f"Not found: {export_path}")
+                        )
+
             elif config.graph_driver == "kuzu":
                 # Test Kuzu availability and DB path
                 try:
-                    import kuzu
+                    import kuzu  # noqa: F401
+
                     checks.append(("Kuzu library", True, "Available"))
-                    
+
                     db_path = Path(config.graph_db_path)
                     if db_path.exists():
                         checks.append(("Database path", True, f"Exists at {db_path}"))
                     else:
-                        checks.append(("Database path", False, f"Will be created at {db_path}"))
-                        
+                        checks.append(
+                            ("Database path", False, f"Will be created at {db_path}")
+                        )
+
                 except ImportError:
-                    checks.append(("Kuzu library", False, "Not installed (pip install kuzu)"))
-        
+                    checks.append(
+                        ("Kuzu library", False, "Not installed (pip install kuzu)")
+                    )
+
         # Display health check results
         health_table = Table(title="Health Checks")
         health_table.add_column("Check", style="white")
         health_table.add_column("Status", style="green")
         health_table.add_column("Details", style="blue")
-        
+
         for check_name, status, details in checks:
             status_icon = "[green]✓[/green]" if status else "[red]✗[/red]"
             health_table.add_row(check_name, status_icon, details)
-        
+
         console.print(health_table)
 
     except typer.Exit:

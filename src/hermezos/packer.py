@@ -6,8 +6,9 @@ import re
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
+from .index import IndexAdapter
 from .models import (
     DetectorType,
     PackBundle,
@@ -18,7 +19,6 @@ from .models import (
     Status,
     TriggerType,
 )
-from .index import IndexAdapter
 
 
 class RulePacker:
@@ -46,7 +46,7 @@ class RulePacker:
         self,
         rules: Iterable[RuleCard],
         request: PackRequest,
-        index: IndexAdapter | None = None
+        index: IndexAdapter | None = None,
     ) -> PackBundle:
         """Pack rules based on the request.
 
