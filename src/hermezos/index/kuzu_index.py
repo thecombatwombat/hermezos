@@ -155,7 +155,7 @@ class KuzuIndex:
             if conditions:
                 query = f"""
                     MATCH (r:RuleCard)-[:HAS_TAG]->(t:IntentTag)
-                    WHERE {' AND '.join(conditions)}
+                    WHERE {" AND ".join(conditions)}
                     RETURN DISTINCT r.rule_id
                     ORDER BY r.rule_id
                 """

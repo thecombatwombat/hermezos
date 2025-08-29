@@ -1,6 +1,5 @@
 """Tests for NullIndex implementation."""
 
-
 from hermezos.index.null_index import NullIndex
 from hermezos.models import (
     Action,

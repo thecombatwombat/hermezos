@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+
 from hermezos.index.graphiti import GraphitiIndex
 from hermezos.models import (
     Action,

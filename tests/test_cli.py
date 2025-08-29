@@ -5,8 +5,9 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from hermezos.cli import EXIT_BAD_USAGE, EXIT_VALIDATION_ERROR, app
 from typer.testing import CliRunner
+
+from hermezos.cli import EXIT_BAD_USAGE, EXIT_VALIDATION_ERROR, app
 
 
 class TestCLI:

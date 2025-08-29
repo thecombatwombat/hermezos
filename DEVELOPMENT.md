@@ -32,20 +32,32 @@ The repository includes pre-commit hooks that automatically:
 
 ### How Pre-commit Works
 
-**Important**: When hooks auto-fix files, the commit is blocked so you can review the changes.
+The pre-commit hooks automatically format code and fix linting issues, then stage the changes so your commit succeeds in one step.
 
+#### Simple One-Step Workflow ✅
 ```bash
-# Normal workflow
+# Make your changes
 git add .
 git commit -m "your message"
 
-# If hooks modify files, you'll see:
-# black....................................................................Failed
-# - files were modified by this hook
+# The hooks will:
+# 1. 🔧 Run Black formatter
+# 2. 🔧 Run Ruff linter with auto-fix
+# 3. 🔧 Run Ruff formatter
+# 4. 📝 Automatically stage any fixed files
+# 5. ✅ Commit succeeds!
+```
 
-# Stage the auto-fixed files and commit again
-git add .
-git commit -m "your message"  # Now it should succeed
+#### What You'll See
+```bash
+trim trailing whitespace.................................................Passed
+fix end of files.........................................................Passed
+check yaml...............................................................Passed
+Format and Lint Python Code..............................................Passed
+Bootstrap Dependencies Check.............................................Passed
+Bootstrap Tests..........................................................Passed
+[main abc1234] your commit message
+ X files changed, Y insertions(+), Z deletions(-)
 ```
 
 ### Running Pre-commit Manually
