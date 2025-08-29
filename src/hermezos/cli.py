@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 
+import builtins
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -498,10 +500,10 @@ def validate(
 @app.command()
 def pack(
     path: str = typer.Argument(..., help="Path to analyze"),
-    intent_tags: list[str] | None = typer.Option(
+    intent_tags: builtins.list[str] | None = typer.Option(
         None, "--intent", help="Filter by intent tags"
     ),
-    languages: list[str] | None = typer.Option(
+    languages: builtins.list[str] | None = typer.Option(
         None, "--lang", help="Filter by programming languages"
     ),
     limit: int | None = typer.Option(None, "--limit", help="Maximum number of rules"),
