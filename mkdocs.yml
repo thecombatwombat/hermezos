@@ -1,0 +1,17 @@
+site_name: HermezOS
+site_url: https://thecombatwombat.github.io/hermezos/
+repo_url: https://github.com/thecombatwombat/hermezos
+theme:
+  name: material
+strict: true
+nav:
+  - Home: index.md
+  - Quickstart: Quickstart.md
+  - MCP: MCP.md
+  - Contributing: contrib.md
+  - Android:
+    - Gradle Plugins: android/gradle_plugins.md
+plugins:
+  - search
+  - minify:
+      minify_html: true

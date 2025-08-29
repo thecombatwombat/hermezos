@@ -2,6 +2,7 @@
 
 *Messenger of Unwritten Rules*
 
+- **Docs:** https://thecombatwombat.github.io/hermezos/
 HermezOS is a local-first knowledge registry and context packer that helps teams maintain and share development best practices, coding standards, and project-specific rules.
 
 ## Overview
