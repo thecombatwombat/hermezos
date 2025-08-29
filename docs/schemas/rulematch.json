@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RuleMatch",
+  "type": "object",
+  "properties": {
+    "rule": {
+      "$ref": "rulecard.json"
+    },
+    "fingerprint": {
+      "type": "string"
+    },
+    "triggered_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "detected_in": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "rule",
+    "fingerprint"
+  ]
+}

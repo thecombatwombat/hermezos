@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PackRequest",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string"
+    },
+    "intent_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limit": {
+      "type": "integer"
+    },
+    "include_deprecated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "path"
+  ]
+}

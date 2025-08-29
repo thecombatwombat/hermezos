@@ -1,0 +1,21 @@
+schema_version: 1
+id: RULE-python-python-rule
+name: Python Rule
+version: 1
+status: draft
+severity: info
+domain: python
+intent_tags: []
+scope: {}
+triggers: []
+detectors: []
+action:
+  type: manual
+  steps:
+    - Describe the manual steps to resolve this issue
+hint: Review python rule
+references: []
+provenance:
+  author: CLI User
+  created: '2025-08-29T06:53:38Z'
+  last_updated: '2025-08-29T06:53:38Z'

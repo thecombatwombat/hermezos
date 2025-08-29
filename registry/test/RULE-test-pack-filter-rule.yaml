@@ -1,0 +1,21 @@
+schema_version: 1
+id: RULE-test-pack-filter-rule
+name: Pack Filter Rule
+version: 1
+status: draft
+severity: info
+domain: test
+intent_tags: []
+scope: {}
+triggers: []
+detectors: []
+action:
+  type: manual
+  steps:
+    - Describe the manual steps to resolve this issue
+hint: Review pack filter rule
+references: []
+provenance:
+  author: CLI User
+  created: '2025-08-29T06:53:38Z'
+  last_updated: '2025-08-29T06:53:38Z'

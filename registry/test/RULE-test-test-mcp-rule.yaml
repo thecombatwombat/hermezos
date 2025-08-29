@@ -1,0 +1,21 @@
+schema_version: 1
+id: RULE-test-test-mcp-rule
+name: Test MCP Rule
+version: 1
+status: draft
+severity: info
+domain: test
+intent_tags: []
+scope: {}
+triggers: []
+detectors: []
+action:
+  type: manual
+  steps:
+    - Describe the manual steps to resolve this issue
+hint: Review test mcp rule
+references: []
+provenance:
+  author: MCP User
+  created: '2025-08-29T06:59:30Z'
+  last_updated: '2025-08-29T06:59:30Z'

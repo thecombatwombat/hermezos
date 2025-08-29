@@ -1,0 +1,28 @@
+schema_version: 1
+id: "RULE-android-plugins-dsl"
+name: "Prefer Gradle plugins DSL"
+version: 1
+status: "active"
+severity: "warning"
+domain: "android"
+intent_tags: ["build", "gradle"]
+scope:
+  repo_patterns: ["app/", "lib/"]
+  file_globs: ["**/*.gradle.kts", "**/build.gradle"]
+  languages: ["kotlin"]
+triggers:
+  - type: "path_contains"
+    value: "app/src/main"
+detectors:
+  - type: "regex"
+    file_glob: "**/build.gradle"
+    pattern: "(?m)^apply plugin: 'kotlin-android'$"
+action:
+  type: "script"
+  fix_command: "scripts/fix_kotlin_plugin.sh"
+  steps:
+    - "Open the module's Gradle file and use the plugins { id(\"org.jetbrains.kotlin.android\") } DSL."
+hint: "Prefer plugins {} DSL over 'apply plugin'"
+references:
+  - doc_url: "docs/android/gradle_plugins.md#kotlin"
+    note: "Rationale and example"
