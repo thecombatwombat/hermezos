@@ -1,9 +1,9 @@
 """Command-line interface for HermezOS."""
 
-import builtins
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any, List
 
 import typer
 from rich.console import Console
@@ -43,6 +43,12 @@ def get_storage(config: Config) -> FileSystemStorage:
 def get_packer(config: Config) -> RulePacker:
     """Get packer instance from configuration."""
     return RulePacker()
+
+
+def get_index(config: Config):
+    """Get index adapter from configuration."""
+    from .index import make_index
+    return make_index(config)
 
 
 @app.command()
@@ -486,10 +492,10 @@ def validate(
 @app.command()
 def pack(
     path: str = typer.Argument(..., help="Path to analyze"),
-    intent_tags: builtins.list[str] | None = typer.Option(
+    intent_tags: List[str] | None = typer.Option(
         None, "--intent", help="Filter by intent tags"
     ),
-    languages: builtins.list[str] | None = typer.Option(
+    languages: List[str] | None = typer.Option(
         None, "--lang", help="Filter by programming languages"
     ),
     limit: int | None = typer.Option(None, "--limit", help="Maximum number of rules"),
@@ -513,6 +519,9 @@ def pack(
         storage = get_storage(config)
         packer = get_packer(config)
 
+        # Get index adapter
+        index = get_index(config)
+
         # Get all rules from storage
         rules = storage.list_rules()
 
@@ -525,7 +534,12 @@ def pack(
             file_globs=None,
         )
 
-        bundle = packer.pack(rules, request)
+        try:
+            bundle = packer.pack(rules, request, index)
+        finally:
+            # Always close index
+            if index:
+                index.close()
 
         if json_output:
             bundle_data = bundle.model_dump()
@@ -633,6 +647,225 @@ def doctor(
     except (OSError, PermissionError) as e:
         console.print(f"[red]Doctor check failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e
+    except Exception as e:
+        console.print(f"[red]Doctor check failed: {e}[/red]")
+        raise typer.Exit(EXIT_IO_ERROR) from e
+
+
+# Graph command group
+graph_app = typer.Typer()
+app.add_typer(graph_app, name="graph", help="Graph indexing operations")
+
+
+@graph_app.command()
+def export(
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
+) -> None:
+    """Export rules to Graphiti JSONL format."""
+    try:
+        config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
+        if not config_path.exists():
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
+            raise typer.Exit(EXIT_BAD_USAGE)
+
+        config = Config(config_path)
+        
+        if not config.graph_enabled:
+            console.print("[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]")
+            console.print("[yellow][graph][/yellow]")
+            console.print("[yellow]enabled = true[/yellow]")
+            console.print("[yellow]driver = \"graphiti\"[/yellow]")
+            raise typer.Exit(EXIT_OK)
+            
+        if config.graph_driver != "graphiti":
+            console.print(f"[red]Export requires driver='graphiti', got '{config.graph_driver}'[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE)
+
+        storage = get_storage(config)
+        index = get_index(config)
+        
+        try:
+            # Load all rules and upsert to index
+            rules = storage.list_rules()
+            console.print(f"[blue]Loading {len(rules)} rules...[/blue]")
+            
+            for rule in rules:
+                index.upsert_card(rule)
+            
+            # Close index to trigger export
+            index.close()
+            
+            # Report results
+            export_path = Path(config.graph_export_path)
+            nodes_file = export_path / "nodes.jsonl"
+            edges_file = export_path / "edges.jsonl"
+            
+            if nodes_file.exists() and edges_file.exists():
+                nodes_count = sum(1 for _ in open(nodes_file))
+                edges_count = sum(1 for _ in open(edges_file))
+                console.print(f"[green]Exported {nodes_count} nodes and {edges_count} edges[/green]")
+                console.print(f"[blue]Files: {nodes_file}, {edges_file}[/blue]")
+            else:
+                console.print("[yellow]Export completed but files not found[/yellow]")
+                
+        finally:
+            if index:
+                index.close()
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Export failed: {e}[/red]")
+        raise typer.Exit(EXIT_IO_ERROR) from e
+
+
+@graph_app.command()
+def sync(
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
+) -> None:
+    """Sync rules to live Graphiti server."""
+    try:
+        config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
+        if not config_path.exists():
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
+            raise typer.Exit(EXIT_BAD_USAGE)
+
+        config = Config(config_path)
+        
+        if not config.graph_enabled:
+            console.print("[yellow]Graph indexing is disabled. Enable it in hermez.toml:[/yellow]")
+            console.print("[yellow][graph][/yellow]")
+            console.print("[yellow]enabled = true[/yellow]")
+            console.print("[yellow]driver = \"graphiti\"[/yellow]")
+            console.print("[yellow]mode = \"live\"[/yellow]")
+            raise typer.Exit(EXIT_OK)
+            
+        if config.graph_driver != "graphiti":
+            console.print(f"[red]Sync requires driver='graphiti', got '{config.graph_driver}'[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE)
+            
+        if config.graph_mode != "live":
+            console.print(f"[red]Sync requires mode='live', got '{config.graph_mode}'[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE)
+
+        storage = get_storage(config)
+        index = get_index(config)
+        
+        try:
+            # Load all rules and sync to server
+            rules = storage.list_rules()
+            console.print(f"[blue]Syncing {len(rules)} rules to {config.graph_url}...[/blue]")
+            
+            for rule in rules:
+                index.upsert_card(rule)
+            
+            console.print("[green]Sync completed[/green]")
+                
+        finally:
+            if index:
+                index.close()
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Sync failed: {e}[/red]")
+        raise typer.Exit(EXIT_IO_ERROR) from e
+
+
+@graph_app.command()
+def doctor(
+    path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
+) -> None:
+    """Check graph indexing configuration and health."""
+    try:
+        config_path = path / "hermez.toml" if path else Path.cwd() / "hermez.toml"
+        if not config_path.exists():
+            console.print(
+                f"[red]HermezOS project not found at {config_path.parent}[/red]"
+            )
+            raise typer.Exit(EXIT_BAD_USAGE)
+
+        config = Config(config_path)
+        
+        # Display configuration
+        table = Table(title="Graph Indexing Configuration")
+        table.add_column("Setting", style="cyan")
+        table.add_column("Value", style="white")
+        
+        table.add_row("Enabled", str(config.graph_enabled))
+        table.add_row("Driver", config.graph_driver)
+        table.add_row("Mode", config.graph_mode)
+        
+        if config.graph_driver == "graphiti":
+            table.add_row("URL", config.graph_url)
+            table.add_row("Export Path", config.graph_export_path)
+        elif config.graph_driver == "kuzu":
+            table.add_row("DB Path", config.graph_db_path)
+            
+        console.print(table)
+        
+        # Health checks
+        checks = []
+        
+        if not config.graph_enabled:
+            checks.append(("Graph indexing", False, "Disabled in configuration"))
+        else:
+            checks.append(("Graph indexing", True, f"Enabled with driver '{config.graph_driver}'"))
+            
+            # Driver-specific checks
+            if config.graph_driver == "graphiti":
+                if config.graph_mode == "live":
+                    # Test connection to Graphiti server
+                    try:
+                        import requests
+                        response = requests.head(config.graph_url, timeout=5)
+                        if response.status_code < 400:
+                            checks.append(("Graphiti server", True, f"Reachable at {config.graph_url}"))
+                        else:
+                            checks.append(("Graphiti server", False, f"HTTP {response.status_code}"))
+                    except Exception as e:
+                        checks.append(("Graphiti server", False, f"Connection failed: {e}"))
+                else:
+                    # Check export directory
+                    export_path = Path(config.graph_export_path)
+                    if export_path.exists():
+                        checks.append(("Export directory", True, f"Exists at {export_path}"))
+                    else:
+                        checks.append(("Export directory", False, f"Not found: {export_path}"))
+                        
+            elif config.graph_driver == "kuzu":
+                # Test Kuzu availability and DB path
+                try:
+                    import kuzu
+                    checks.append(("Kuzu library", True, "Available"))
+                    
+                    db_path = Path(config.graph_db_path)
+                    if db_path.exists():
+                        checks.append(("Database path", True, f"Exists at {db_path}"))
+                    else:
+                        checks.append(("Database path", False, f"Will be created at {db_path}"))
+                        
+                except ImportError:
+                    checks.append(("Kuzu library", False, "Not installed (pip install kuzu)"))
+        
+        # Display health check results
+        health_table = Table(title="Health Checks")
+        health_table.add_column("Check", style="white")
+        health_table.add_column("Status", style="green")
+        health_table.add_column("Details", style="blue")
+        
+        for check_name, status, details in checks:
+            status_icon = "[green]✓[/green]" if status else "[red]✗[/red]"
+            health_table.add_row(check_name, status_icon, details)
+        
+        console.print(health_table)
+
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[red]Doctor check failed: {e}[/red]")
         raise typer.Exit(EXIT_IO_ERROR) from e

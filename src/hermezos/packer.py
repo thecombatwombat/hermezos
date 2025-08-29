@@ -6,7 +6,7 @@ import re
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .models import (
     DetectorType,
@@ -18,6 +18,7 @@ from .models import (
     Status,
     TriggerType,
 )
+from .index import IndexAdapter
 
 
 class RulePacker:
@@ -41,18 +42,36 @@ class RulePacker:
             Severity.INFO: 2,
         }
 
-    def pack(self, rules: Iterable[RuleCard], request: PackRequest) -> PackBundle:
+    def pack(
+        self,
+        rules: Iterable[RuleCard],
+        request: PackRequest,
+        index: IndexAdapter | None = None
+    ) -> PackBundle:
         """Pack rules based on the request.
 
         Args:
             rules: Iterable of rule cards to evaluate
             request: Pack request with filtering criteria
+            index: Optional index adapter for prefiltering
 
         Returns:
             PackBundle containing matched rules and metadata
         """
         # Convert iterable to list for multiple iterations
         rule_list = list(rules)
+
+        # Apply index prefilter if available
+        if index:
+            try:
+                candidate_ids = index.candidate_ids(request)
+                if candidate_ids:
+                    # Filter rules to only those in candidate set
+                    id_set = set(candidate_ids)
+                    rule_list = [r for r in rule_list if r.id in id_set]
+            except Exception as e:
+                # Log warning but continue with all rules
+                print(f"WARNING: Index prefilter failed: {e}")
 
         # Apply filters from PackRequest
         filtered_rules = self._apply_request_filters(rule_list, request)

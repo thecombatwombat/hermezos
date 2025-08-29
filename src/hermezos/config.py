@@ -98,3 +98,46 @@ class Config:
         """Get whether strict validation is enabled."""
         value = self.get("validation.strict", True)
         return bool(value) if value is not None else True
+
+    # Graph indexing configuration properties
+    @property
+    def graph_enabled(self) -> bool:
+        """Get whether graph indexing is enabled."""
+        value = self.get("graph.enabled", False)
+        return bool(value) if value is not None else False
+
+    @property
+    def graph_driver(self) -> str:
+        """Get graph driver type."""
+        value = self.get("graph.driver", "null")
+        return str(value) if value is not None else "null"
+
+    @property
+    def graph_mode(self) -> str:
+        """Get graph mode (export_only or live)."""
+        value = self.get("graph.mode", "export_only")
+        return str(value) if value is not None else "export_only"
+
+    @property
+    def graph_url(self) -> str:
+        """Get Graphiti server URL."""
+        value = self.get("graph.url", "http://localhost:8800")
+        return str(value) if value is not None else "http://localhost:8800"
+
+    @property
+    def graph_api_key(self) -> str:
+        """Get Graphiti API key."""
+        value = self.get("graph.api_key", "")
+        return str(value) if value is not None else ""
+
+    @property
+    def graph_db_path(self) -> str:
+        """Get Kuzu database path."""
+        value = self.get("graph.db_path", ".hermezos/kuzu")
+        return str(value) if value is not None else ".hermezos/kuzu"
+
+    @property
+    def graph_export_path(self) -> str:
+        """Get Graphiti export directory path."""
+        value = self.get("graph.export_path", "graph")
+        return str(value) if value is not None else "graph"

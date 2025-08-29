@@ -32,6 +32,8 @@ dependencies = [
     "rich>=13,<14",
     "ruamel.yaml>=0.18,<0.19",
     "pyyaml>=6.0,<7",
+    "requests>=2.31,<3",
+    "kuzu>=0.5,<1",
 ]
 
 [project.optional-dependencies]

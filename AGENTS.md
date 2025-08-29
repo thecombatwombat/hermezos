@@ -502,6 +502,130 @@ export HERMEZ_LOG_LEVEL=DEBUG
 hermez pack . --json -
 ```
 
+## Indexing (Optional)
+
+HermezOS supports optional graph indexing for enhanced rule discovery and analysis. Indexing is **disabled by default** to maintain local-first operation.
+
+### Configuration
+
+Add a `[graph]` section to your `hermez.toml`:
+
+```toml
+[graph]
+enabled = false                    # Enable indexing
+driver = "null"                   # null | graphiti | kuzu
+mode = "export_only"              # export_only | live (graphiti only)
+url = "http://localhost:8800"     # Graphiti server URL
+api_key = ""                      # Graphiti API key
+db_path = ".hermezos/kuzu"        # Kuzu database path
+export_path = "graph"             # Graphiti export directory
+```
+
+### Graphiti Integration
+
+#### Export Mode (Recommended)
+
+Export rules to deterministic JSONL files for external processing:
+
+```toml
+[graph]
+enabled = true
+driver = "graphiti"
+mode = "export_only"
+export_path = "graph"
+```
+
+```bash
+# Export all rules to graph/nodes.jsonl and graph/edges.jsonl
+hermez graph export
+
+# Files are sorted and deterministic for version control
+git add graph/
+```
+
+#### Live Mode
+
+Send rules directly to a Graphiti server:
+
+```toml
+[graph]
+enabled = true
+driver = "graphiti"
+mode = "live"
+url = "http://localhost:8800"
+api_key = "your-api-key"
+```
+
+```bash
+# Sync all rules to live server
+hermez graph sync
+```
+
+### Kùzu Embedded Database
+
+Use local graph database for rule prefiltering:
+
+```toml
+[graph]
+enabled = true
+driver = "kuzu"
+db_path = ".hermezos/kuzu"
+```
+
+```bash
+# Packer will automatically use index for prefiltering
+hermez pack --path . --intent best-practice --json -
+
+# Check database health
+hermez graph doctor
+```
+
+### Graph Commands
+
+```bash
+# Export rules to JSONL (graphiti driver)
+hermez graph export
+
+# Sync rules to live server (graphiti + live mode)
+hermez graph sync
+
+# Check indexing configuration and health
+hermez graph doctor
+```
+
+### Deterministic Behavior
+
+- **Backward Compatible**: All existing commands work identically when indexing is disabled
+- **Deterministic**: Same pack output unless index restricts candidates via prefiltering
+- **Local-First**: No network calls unless explicitly configured for live mode
+- **Safe Fallback**: Index failures fall back to normal operation with warnings
+
+### Agent Integration
+
+When indexing is enabled, the packer uses the index as an optional prefilter:
+
+```python
+# Python API example
+from hermezos.config import Config
+from hermezos.index import make_index
+from hermezos.packer import RulePacker
+from hermezos.storage.filesystem import FileSystemStorage
+
+config = Config()
+storage = FileSystemStorage(config.registry_root)
+packer = RulePacker()
+index = make_index(config)
+
+try:
+    rules = storage.list_rules()
+    request = PackRequest(path=".", intent_tags=["security"])
+    
+    # Index prefilters candidates if enabled
+    bundle = packer.pack(rules, request, index)
+finally:
+    index.close()
+```
+
 ## Contributing
 
 When adding new agent integrations:

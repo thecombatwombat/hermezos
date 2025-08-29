@@ -3,7 +3,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import ruamel.yaml
 from pydantic import ValidationError
