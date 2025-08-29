@@ -652,6 +652,111 @@ def doctor(
         raise typer.Exit(EXIT_IO_ERROR) from e
 
 
+@app.command()
+def bootstrap(
+    feature: str | None = typer.Argument(None, help="Feature to bootstrap (indexing, mcp, all)"),
+    force: bool = typer.Option(False, "--force", help="Force reinstall even if already installed"),
+) -> None:
+    """Bootstrap optional dependencies for HermezOS features."""
+    import subprocess
+    import sys
+    
+    try:
+        # Map features to extras
+        feature_map = {
+            "indexing": "indexing",
+            "mcp": "mcp",
+            "all": "all",
+        }
+        
+        if feature is None:
+            # Show available features
+            console.print("[blue]Available features to bootstrap:[/blue]")
+            console.print("  [cyan]indexing[/cyan] - Graph indexing with Graphiti and Kùzu")
+            console.print("  [cyan]mcp[/cyan] - Model Context Protocol server support")
+            console.print("  [cyan]all[/cyan] - All optional features")
+            console.print("\n[yellow]Usage:[/yellow] hermez bootstrap <feature>")
+            return
+            
+        if feature not in feature_map:
+            console.print(f"[red]Unknown feature '{feature}'. Available: {', '.join(feature_map.keys())}[/red]")
+            raise typer.Exit(EXIT_BAD_USAGE)
+            
+        extra = feature_map[feature]
+        
+        # Check if already installed (unless force)
+        if not force:
+            missing_deps = []
+            
+            if feature in ("indexing", "all"):
+                try:
+                    import requests
+                except ImportError:
+                    missing_deps.append("requests")
+                    
+                try:
+                    import kuzu
+                except ImportError:
+                    missing_deps.append("kuzu")
+                    
+            if feature in ("mcp", "all"):
+                try:
+                    import mcp
+                except ImportError:
+                    missing_deps.append("mcp")
+                    
+            if not missing_deps:
+                console.print(f"[green]Feature '{feature}' is already installed![/green]")
+                console.print("[yellow]Use --force to reinstall[/yellow]")
+                return
+                
+        # Install the feature
+        console.print(f"[blue]Installing '{feature}' dependencies...[/blue]")
+        
+        # Use pip to install the extra
+        cmd = [sys.executable, "-m", "pip", "install", f"hermezos[{extra}]"]
+        if force:
+            cmd.append("--force-reinstall")
+            
+        console.print(f"[dim]Running: {' '.join(cmd)}[/dim]")
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            console.print(f"[green]✓ Successfully installed '{feature}' dependencies![/green]")
+            
+            # Show what was installed
+            if feature in ("indexing", "all"):
+                console.print("  [cyan]• requests[/cyan] - HTTP client for Graphiti live mode")
+                console.print("  [cyan]• kuzu[/cyan] - Embedded graph database")
+                
+            if feature in ("mcp", "all"):
+                console.print("  [cyan]• mcp[/cyan] - Model Context Protocol support")
+                
+            console.print(f"\n[blue]You can now use '{feature}' features![/blue]")
+            
+            # Show next steps
+            if feature in ("indexing", "all"):
+                console.print("\n[yellow]Next steps for indexing:[/yellow]")
+                console.print("1. Enable indexing in hermez.toml:")
+                console.print("   [graph]")
+                console.print("   enabled = true")
+                console.print("   driver = \"graphiti\"  # or \"kuzu\"")
+                console.print("2. Run: hermez graph doctor")
+                console.print("3. Export rules: hermez graph export")
+                
+        else:
+            console.print(f"[red]✗ Installation failed![/red]")
+            console.print(f"[red]Error: {result.stderr}[/red]")
+            raise typer.Exit(EXIT_IO_ERROR)
+            
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Bootstrap failed: {e}[/red]")
+        raise typer.Exit(EXIT_IO_ERROR) from e
+
+
 # Graph command group
 graph_app = typer.Typer()
 app.add_typer(graph_app, name="graph", help="Graph indexing operations")
@@ -776,8 +881,8 @@ def sync(
         raise typer.Exit(EXIT_IO_ERROR) from e
 
 
-@graph_app.command()
-def doctor(
+@graph_app.command("doctor")
+def graph_doctor(
     path: Path | None = typer.Option(None, "--path", help="Path to HermezOS project"),
 ) -> None:
     """Check graph indexing configuration and health."""

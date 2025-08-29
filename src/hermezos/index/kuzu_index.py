@@ -9,12 +9,22 @@ from . import IndexAdapter
 
 logger = logging.getLogger(__name__)
 
-try:
-    import kuzu
-    KUZU_AVAILABLE = True
-except ImportError:
-    KUZU_AVAILABLE = False
-    logger.warning("Kuzu not available - install with: pip install kuzu")
+# Lazy import for optional dependency
+_kuzu = None
+
+def _get_kuzu():
+    """Lazy import kuzu with helpful error message."""
+    global _kuzu
+    if _kuzu is None:
+        try:
+            import kuzu
+            _kuzu = kuzu
+        except ImportError:
+            raise ImportError(
+                "The 'kuzu' library is required for Kùzu graph indexing. "
+                "Install it with: pip install 'hermezos[indexing]' or run: hermez bootstrap"
+            )
+    return _kuzu
 
 
 class KuzuIndex:
@@ -30,8 +40,7 @@ class KuzuIndex:
         Args:
             db_path: Path to Kùzu database directory
         """
-        if not KUZU_AVAILABLE:
-            raise ImportError("Kuzu is not available. Install with: pip install kuzu")
+        kuzu = _get_kuzu()  # This will raise ImportError if kuzu is not available
             
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

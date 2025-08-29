@@ -7,12 +7,27 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import requests
-
 from ..models import PackRequest, RuleCard
 from . import IndexAdapter
 
 logger = logging.getLogger(__name__)
+
+# Lazy import for optional dependency
+_requests = None
+
+def _get_requests():
+    """Lazy import requests with helpful error message."""
+    global _requests
+    if _requests is None:
+        try:
+            import requests
+            _requests = requests
+        except ImportError:
+            raise ImportError(
+                "The 'requests' library is required for Graphiti live mode. "
+                "Install it with: pip install 'hermezos[indexing]' or run: hermez bootstrap"
+            )
+    return _requests
 
 
 class GraphitiIndex:
@@ -241,6 +256,7 @@ class GraphitiIndex:
                 headers["Authorization"] = f"Bearer {self.api_key}"
             
             # Send to Graphiti server
+            requests = _get_requests()
             response = requests.post(
                 f"{self.url}/api/rules",
                 json=data,
@@ -262,6 +278,7 @@ class GraphitiIndex:
                 headers["Authorization"] = f"Bearer {self.api_key}"
             
             # Send delete to Graphiti server
+            requests = _get_requests()
             response = requests.delete(
                 f"{self.url}/api/rules/{card_id}",
                 headers=headers,
