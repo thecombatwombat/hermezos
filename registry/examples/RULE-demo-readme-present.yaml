@@ -1,0 +1,28 @@
+schema_version: 1
+id: RULE-demo-readme-present
+name: "Demo: Repo has a README"
+version: 1
+status: active
+severity: info
+domain: project
+intent_tags: [demo, onboarding]
+scope:
+  file_globs: ["README.md"]
+  languages: []
+triggers:
+  - type: file_exists
+    value: "./README.md"
+detectors:
+  - type: regex
+    pattern: "(?i)hermezos|hermez"
+action:
+  type: manual
+  steps:
+    - "This is a demo rule that proves packing works locally."
+hint: "Packing works — now try real rules for your codebase."
+references:
+  - doc_url: "./docs/index.md"
+provenance:
+  author: "Archit Joshi"
+  created: "2025-08-29T00:00:00Z"
+  last_updated: "2025-08-29T00:00:00Z"

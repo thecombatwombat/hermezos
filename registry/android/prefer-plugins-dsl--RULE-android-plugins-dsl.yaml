@@ -26,3 +26,7 @@ hint: "Prefer plugins {} DSL over 'apply plugin'"
 references:
   - doc_url: "docs/android/gradle_plugins.md#kotlin"
     note: "Rationale and example"
+provenance:
+  author: "HermezOS Team"
+  created: "2024-01-15T10:00:00Z"
+  last_updated: "2024-01-15T10:00:00Z"

@@ -37,6 +37,16 @@ This will:
 3. Validate the setup and built-in rules
 4. Pack rules for the current directory and preview the output
 
+### Demo
+
+Try the demo rule that ships with this repository:
+
+```bash
+make demo
+```
+
+This showcases HermezOS packing a rule that matches the presence of this README file, demonstrating that the local rule registry is working correctly.
+
 ### Installation & Setup
 
 ```bash

@@ -1,4 +1,4 @@
-.PHONY: install fmt typecheck test help
+.PHONY: install fmt typecheck test help demo
 
 # Default target
 help:
@@ -7,7 +7,13 @@ help:
 	@echo "  fmt         - Format code with black and ruff"
 	@echo "  typecheck   - Run mypy type checking"
 	@echo "  test        - Run tests with pytest"
+	@echo "  demo        - Run demo rule showcase"
 	@echo "  help        - Show this help message"
+
+# Demo
+demo:
+	@/Users/architjoshi/.pyenv/versions/3.12.0/bin/python3 -m hermezos.cli validate
+	@/Users/architjoshi/.pyenv/versions/3.12.0/bin/python3 -m hermezos.cli pack . --intent demo --limit 10 --json --output - | grep -v "^DEBUG:" | jq . | head -50
 
 # Installation
 install:
